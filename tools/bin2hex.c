@@ -12,8 +12,9 @@ int main(int argc, char **argv)
     unsigned char block[256];
     unsigned int csum;
 
-    int fd_i, bc;
+    int bc;
     FILE *fd_o;
+	FILE *fd_i;
     struct stat fileinfo;
 
     unsigned int i, j;
@@ -29,7 +30,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    if ((fd_i = open(argv[2], O_RDONLY)) == -1 || fstat(fd_i, &fileinfo) == -1) {
+    if ((fd_i = fopen(argv[2], "rb")) == NULL || fstat(fileno(fd_i), &fileinfo) == -1) {
         printf("Couldn't open file\n");
         return -1;
     }
@@ -42,7 +43,7 @@ int main(int argc, char **argv)
     }
 
     for (i=0; i<fileinfo.st_size; i+=bc) {
-        read(fd_i, (void*)block, bc);
+        fread((void*)block, 1, bc, fd_i);
         csum = bc+((i/bc)>>8)+((i/bc)&0xff);
         for (j=0; j<bc; j++)
             csum += block[j];
@@ -57,7 +58,7 @@ int main(int argc, char **argv)
     fprintf(fd_o, ":00000001FF\n");
 
     fclose(fd_o);
-    close(fd_i);
+    fclose(fd_i);
 
     return 0;
 }

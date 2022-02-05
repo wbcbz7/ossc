@@ -26,6 +26,10 @@
 #include <unistd.h>
 #include <sys/param.h>
 
+#ifdef __MINGW32__
+#include <winsock2.h>
+#endif
+
 #define HDR_SIZE 512
 #define BUF_SIZE 1024
 #define MAX_FILENAME 32
@@ -107,6 +111,7 @@ int main(int argc, char **argv)
     unsigned fw_version_minor;
     uint32_t hdr_crc;
     uint32_t crc = 0;
+	FILE *inf, *of;
     
     unsigned int i, bytes_read, bytes_written, tot_bytes_read = 0;
     
@@ -115,14 +120,14 @@ int main(int argc, char **argv)
         return -1;  
     }
     
-    if ((fd_i = open(argv[1], O_RDONLY)) == -1 || fstat(fd_i, &fileinfo) == -1) {
+    if ((inf = fopen(argv[1], "rb")) == NULL || fstat(fileno(inf), &fileinfo) == -1) {
         printf("Couldn't open input file\n");
         return -1;
     }
     
     snprintf(fw_bin_name, MAX_FILENAME-1, "ossc_%s%s%s.bin", argv[2], (argc == 4) ? "-" : "", (argc == 4) ? argv[3] : "");
     
-    if ((fd_o = open(fw_bin_name, O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR)) == -1) {
+    if ((of = fopen(fw_bin_name, "wb")) == NULL) {
         printf("Couldn't open output file\n");
         return -1;
     }
@@ -142,7 +147,8 @@ int main(int argc, char **argv)
     *((uint32_t*)(hdrbuf+6+FW_SUFFIX_MAX_SIZE+4)) = htonl((uint32_t)fileinfo.st_size);
 
     // data CRC
-    while ((bytes_read = read(fd_i, rdbuf, BUF_SIZE)) > 0) {
+    while ((bytes_read = fread(rdbuf, sizeof(uint8_t), BUF_SIZE, inf)) > 0) {
+		printf("%d += %d\n", tot_bytes_read, bytes_read);
         crc = crc32(crc, rdbuf, bytes_read);
         tot_bytes_read += bytes_read;
     }
@@ -151,7 +157,9 @@ int main(int argc, char **argv)
     // header CRC
     hdr_crc = crc32(0, hdrbuf, FW_HDR_LEN);
     *((uint32_t*)(hdrbuf+HDR_SIZE-4)) = htonl(hdr_crc);
-
+    
+    printf("%u, %u\n", tot_bytes_read, fileinfo.st_size);
+    
     if (tot_bytes_read != fileinfo.st_size) {
         printf("Incorrect size output file\n");
         return -1; 
@@ -161,16 +169,16 @@ int main(int argc, char **argv)
     printf("Header CRC32: %.8x\n", hdr_crc);
     printf("Data CRC32: %.8x\n", crc);
 
-    bytes_written = write(fd_o, hdrbuf, HDR_SIZE);    
+    bytes_written = fwrite(hdrbuf, sizeof(uint8_t), HDR_SIZE, of);    
     if (bytes_written != HDR_SIZE) {
         printf("Couldn't write output file\n");
         return -1;
     }
 
     tot_bytes_read = 0;
-    lseek(fd_i, 0, SEEK_SET);
-    while ((bytes_read = read(fd_i, rdbuf, BUF_SIZE)) > 0) {
-        bytes_written = write(fd_o, rdbuf, bytes_read);
+    fseek(inf, 0, SEEK_SET);
+    while ((bytes_read = fread(rdbuf, sizeof(uint8_t), BUF_SIZE, inf)) > 0) {
+        bytes_written = fwrite(rdbuf, sizeof(uint8_t), bytes_read, of);
         if (bytes_written != bytes_read) {
             printf("Couldn't write output file\n");
             return -1;
@@ -185,8 +193,8 @@ int main(int argc, char **argv)
 
     printf("Firmware image written to %s\n", fw_bin_name);
     
-    close(fd_o);
-    close(fd_i);
+    fclose(of);
+    fclose(inf);
     
     return 0;
 }
