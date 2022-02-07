@@ -121,6 +121,7 @@ typedef struct {
 } menunavi;
 
 menunavi* get_current_menunavi();
+menuitem_t* get_current_menuitem();
 void render_osd_page();
 void display_menu(alt_u8 forcedisp);
 static void vm_select();

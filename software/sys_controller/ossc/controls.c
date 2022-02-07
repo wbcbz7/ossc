@@ -57,6 +57,8 @@ extern char target_profile_name[PROFILE_NAME_LEN+1];
 alt_u32 remote_code;
 alt_u8 remote_rpt, remote_rpt_prev;
 alt_u32 btn_code, btn_code_prev;
+alt_u8 input_value_first;
+menuitem_t *input_value_previous_item;
 
 void setup_rc()
 {
@@ -121,6 +123,10 @@ int parse_control()
     alt_u32 btn_vec, btn_vec_prev=1;
     alt_u8 pt_only = 0;
     avinput_t man_target_input = AV_LAST;
+    menuitem_t* current_item;
+    int input_value;
+    alt_u8 *val, val_wrap, val_min, val_max;
+    alt_u16 *val_u16, val_u16_min, val_u16_max;
 
     sc_status_reg sc_status;
     sc_status2_reg sc_status2;
@@ -145,16 +151,54 @@ int parse_control()
             goto Button_Check;
     }
 
+    // enable value input from 0-9 buttons
+    if (menu_active)
+        if (
+            ((current_item = get_current_menuitem()) != 0) &&
+            ((current_item->type == OPT_AVCONFIG_NUMVAL_U16) || 
+            (current_item->type == OPT_AVCONFIG_NUMVALUE))
+        ) {   
+            // check if other item is slected
+            if (input_value_previous_item != current_item) input_value_first = 1;
+            input_value_previous_item = current_item;
+
+            if (i <= RC_BTN0) {
+                input_value = (i == RC_BTN0) ? 0 : i + 1;
+                switch(current_item->type) {
+                    case OPT_AVCONFIG_NUMVALUE:
+                        val = current_item->num.data;
+
+                        if (input_value_first) {*val = 0; input_value_first = 0;}
+                        *val = (*val*10 + input_value);
+                        break;
+                    case OPT_AVCONFIG_NUMVAL_U16:
+                        val_u16 = current_item->num_u16.data;
+
+                        if (input_value_first) {*val_u16 = 0; input_value_first = 0;}
+                        *val_u16 = (*val_u16*10 + input_value);
+                        break;
+                    default: break;
+                }
+            }
+        } 
+    else {
+        input_value_first = 1;
+        switch (i) {
+            case RC_BTN1: man_target_input = AV1_RGBs; break;
+            case RC_BTN4: man_target_input = AV1_RGsB; break;
+            case RC_BTN7: man_target_input = AV1_YPBPR; break;
+            case RC_BTN2: man_target_input = AV2_YPBPR; break;
+            case RC_BTN5: man_target_input = AV2_RGsB; break;
+            case RC_BTN3: man_target_input = AV3_RGBHV; break;
+            case RC_BTN6: man_target_input = AV3_RGBs; break;
+            case RC_BTN9: man_target_input = AV3_RGsB; break;
+            case RC_BTN0: man_target_input = AV3_YPBPR; break;
+            default: break;
+        }
+    }
+
+    // common buttons
     switch (i) {
-        case RC_BTN1: man_target_input = AV1_RGBs; break;
-        case RC_BTN4: man_target_input = AV1_RGsB; break;
-        case RC_BTN7: man_target_input = AV1_YPBPR; break;
-        case RC_BTN2: man_target_input = AV2_YPBPR; break;
-        case RC_BTN5: man_target_input = AV2_RGsB; break;
-        case RC_BTN3: man_target_input = AV3_RGBHV; break;
-        case RC_BTN6: man_target_input = AV3_RGBs; break;
-        case RC_BTN9: man_target_input = AV3_RGsB; break;
-        case RC_BTN0: man_target_input = AV3_YPBPR; break;
         case RC_MENU:
             menu_active = !menu_active;
             osd->osd_config.menu_active = menu_active;
