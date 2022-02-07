@@ -32,7 +32,7 @@ const mode_data_t video_modes_default[] = VIDEO_MODES_DEF;
 mode_data_t video_modes[VIDEO_MODES_CNT];
 
 /* TODO: rewrite, check hz etc. */
-alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, alt_u8 h_syncinlen)
+alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, alt_u8 h_syncinlen, alt_u8 syncpol)
 {
     alt_8 i;
     alt_u8 num_modes = sizeof(video_modes)/sizeof(mode_data_t);
@@ -52,10 +52,10 @@ alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, alt_u8 h_syn
                 valid_lm[4] = MODE_L3_GEN_16_9;
                 if (video_modes[i].v_total == 449) {
                     if (!strncmp(video_modes[i].name, "720x400", 7)) {
-                        if (cm.cc.s400p_mode == 0)
+                        if (((cm.cc.s400p_av3 == 0) && (cm.cc.s400p_mode == 0)) || ((cm.cc.s400p_av3 == 1) && (cm.avinput == AV3_RGBHV) && (syncpol == (TVP_SYNCSTAT_IHSPD))))
                             continue;
                     } else if (!strncmp(video_modes[i].name, "640x400", 7)) {
-                        if (cm.cc.s400p_mode == 1)
+                        if (((cm.cc.s400p_av3 == 0) && (cm.cc.s400p_mode == 1)) || ((cm.cc.s400p_av3 == 1) && (cm.avinput == AV3_RGBHV) && (syncpol != (TVP_SYNCSTAT_IHSPD))))
                             continue;
                     }
                 }

@@ -114,4 +114,9 @@
 #define TVP_CSC9LO          0x5A
 #define TVP_CSC9HI          0x5B
 
+enum {
+    TVP_SYNCSTAT_IHSPD    = 1 << 5,
+    TVP_SYNCSTAT_VSPD     = 1 << 2,
+};
+
 #endif /* TVP7002_REGS_H_ */

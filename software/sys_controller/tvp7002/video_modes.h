@@ -178,6 +178,6 @@ typedef struct {
 #define VIDEO_MODES_SIZE (sizeof((mode_data_t[])VIDEO_MODES_DEF))
 #define VIDEO_MODES_CNT (sizeof((mode_data_t[])VIDEO_MODES_DEF)/sizeof(mode_data_t))
 
-alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, alt_u8 h_syncinlen);
+alt_8 get_mode_id(alt_u32 totlines, alt_u8 progressive, alt_u32 hz, alt_u8 h_syncinlen, alt_u8 syncpol);
 
 #endif /* VIDEO_MODES_H_ */

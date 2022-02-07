@@ -146,6 +146,7 @@ MENU(menu_vinputproc, P99_PROTECT({ \
 MENU(menu_sampling, P99_PROTECT({ \
     { LNG("480p in sampler","ｻﾝﾌﾟﾗｰﾃﾞ480p"),     OPT_AVCONFIG_SELECTION, { .sel = { &tc.s480p_mode,    OPT_WRAP, SETTING_ITEM(s480p_mode_desc) } } },
     { LNG("400p in sampler","ｻﾝﾌﾟﾗｰﾃﾞ400p"),     OPT_AVCONFIG_SELECTION, { .sel = { &tc.s400p_mode,    OPT_WRAP, SETTING_ITEM(s400p_mode_desc) } } },
+    { LNG("400p AV3 detect","ｻﾝﾌﾟﾗｰﾃﾞ400p"),     OPT_AVCONFIG_SELECTION, { .sel = { &tc.s400p_av3,     OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { LNG("Allow TVP HPLL2x","TVP HPLL2xｷｮﾖｳ"), OPT_AVCONFIG_SELECTION, { .sel = { &tc.tvp_hpll2x,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { LNG("Allow upsample2x","ｱｯﾌﾟｻﾝﾌﾟﾙ2xｷｮﾖｳ"), OPT_AVCONFIG_SELECTION, { .sel = { &tc.upsample2x,   OPT_WRAP, SETTING_ITEM(off_on_desc) } } },
     { LNG("<Adv. timing   >","<ｶｸｼｭﾀｲﾐﾝｸﾞ>"),    OPT_SUBMENU,            { .sub = { &menu_advtiming, &vm_arg_info, vm_select } } },
@@ -258,6 +259,10 @@ alt_u8 navlvl = 0;
 
 menunavi* get_current_menunavi() {
     return &navi[navlvl];
+}
+
+menuitem_t* get_current_menuitem() {
+    return navi[navlvl].m != 0 ? &navi[navlvl].m->items[navi[navlvl].mp] : 0;
 }
 
 void write_option_value(menuitem_t *item, int func_called, int retval)

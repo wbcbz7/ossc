@@ -391,7 +391,7 @@ status_t get_status(tvp_sync_input_t syncinput)
         if ((tc.s480p_mode != cm.cc.s480p_mode) && (video_modes[cm.id].v_total == 525))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
-        if ((tc.s400p_mode != cm.cc.s400p_mode) && (video_modes[cm.id].v_total == 449))
+        if (((tc.s400p_mode != cm.cc.s400p_mode) || (tc.s400p_av3 != cm.cc.s400p_av3)) && (video_modes[cm.id].v_total == 449))
             status = (status < MODE_CHANGE) ? MODE_CHANGE : status;
 
         if (cm.pll_config != pll_reconfig->pll_config_status.c_config_id)
@@ -649,7 +649,7 @@ void update_sc_config()
 // Configure TVP7002 and scan converter logic based on the video mode
 void program_mode()
 {
-    alt_u8 h_syncinlen, v_syncinlen, hdmitx_pclk_level, osd_x_size, osd_y_size;
+    alt_u8 h_syncinlen, v_syncinlen, hdmitx_pclk_level, osd_x_size, osd_y_size, syncpol;
     alt_u32 h_hz, v_hz_x100, h_synclen_px;
 
     // Mark as stable (needed after sync up to avoid unnecessary mode switch)
@@ -674,8 +674,11 @@ void program_mode()
     sniprintf(row2, LCD_ROW_LEN+1, "%u.%.2ukHz %u.%.2uHz", (unsigned)(h_hz/1000), (unsigned)((h_hz%1000)/10), (unsigned)(v_hz_x100/100), (unsigned)(v_hz_x100%100));
     ui_disp_status(1);
 
+    // read sync polarity (used for AV3_RGBHV + 400p mode autodetection)
+    syncpol = tvp_readreg(TVP_SYNCSTAT) & (TVP_SYNCSTAT_IHSPD | TVP_SYNCSTAT_VSPD);
+
     //printf ("Get mode id with %u %u %f\n", totlines, progressive, hz);
-    cm.id = get_mode_id(cm.totlines, cm.progressive, v_hz_x100/100, h_syncinlen);
+    cm.id = get_mode_id(cm.totlines, cm.progressive, v_hz_x100/100, h_syncinlen, syncpol);
 
     if (cm.id == -1) {
         printf ("Error: no suitable mode found, defaulting to 240p\n");

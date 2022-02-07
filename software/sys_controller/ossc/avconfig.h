@@ -103,6 +103,7 @@ typedef struct {
     alt_u8 hdmi_itc;
     alt_u8 s480p_mode;
     alt_u8 s400p_mode;
+    alt_u8 s400p_av3;
     alt_u8 tvp_hpll2x;
     alt_u8 upsample2x;
     alt_u8 ypbpr_cs;
