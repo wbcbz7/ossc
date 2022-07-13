@@ -57,7 +57,10 @@ extern char target_profile_name[PROFILE_NAME_LEN+1];
 alt_u32 remote_code;
 alt_u8 remote_rpt, remote_rpt_prev;
 alt_u32 btn_code, btn_code_prev;
-alt_u8 input_value_first;
+alt_u16 input_value_timeout;
+enum {
+    INPUT_VALUE_TIMEOUT_RESET = 0x2000,
+};
 menuitem_t *input_value_previous_item;
 
 void setup_rc()
@@ -152,14 +155,14 @@ int parse_control()
     }
 
     // enable value input from 0-9 buttons
-    if (menu_active)
+    if (menu_active) {
         if (
             ((current_item = get_current_menuitem()) != 0) &&
             ((current_item->type == OPT_AVCONFIG_NUMVAL_U16) || 
             (current_item->type == OPT_AVCONFIG_NUMVALUE))
         ) {   
             // check if other item is slected
-            if (input_value_previous_item != current_item) input_value_first = 1;
+            if (input_value_previous_item != current_item) input_value_timeout = 0;
             input_value_previous_item = current_item;
 
             if (i <= RC_BTN0) {
@@ -168,21 +171,22 @@ int parse_control()
                     case OPT_AVCONFIG_NUMVALUE:
                         val = current_item->num.data;
 
-                        if (input_value_first) {*val = 0; input_value_first = 0;}
+                        if (input_value_timeout == 0) {*val = 0; input_value_timeout = INPUT_VALUE_TIMEOUT_RESET;}
                         *val = (*val*10 + input_value);
                         break;
                     case OPT_AVCONFIG_NUMVAL_U16:
                         val_u16 = current_item->num_u16.data;
 
-                        if (input_value_first) {*val_u16 = 0; input_value_first = 0;}
+                        if (input_value_timeout == 0) {*val_u16 = 0; input_value_timeout = INPUT_VALUE_TIMEOUT_RESET;}
                         *val_u16 = (*val_u16*10 + input_value);
                         break;
                     default: break;
                 }
             }
         } 
+    }
     else {
-        input_value_first = 1;
+        input_value_timeout = 0;
         switch (i) {
             case RC_BTN1: man_target_input = AV1_RGBs; break;
             case RC_BTN4: man_target_input = AV1_RGsB; break;
@@ -415,6 +419,9 @@ Button_Check:
         sys_ctrl |= (lcd_bl_timeout << LCD_BL_TIMEOUT_OFFS);
 
     IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE, sys_ctrl);
+
+    // decrement timeout counter
+    if (input_value_timeout != 0) input_value_timeout--;
 
     return ret;
 }

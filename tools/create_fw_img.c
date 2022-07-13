@@ -148,7 +148,6 @@ int main(int argc, char **argv)
 
     // data CRC
     while ((bytes_read = fread(rdbuf, sizeof(uint8_t), BUF_SIZE, inf)) > 0) {
-		printf("%d += %d\n", tot_bytes_read, bytes_read);
         crc = crc32(crc, rdbuf, bytes_read);
         tot_bytes_read += bytes_read;
     }
@@ -157,8 +156,6 @@ int main(int argc, char **argv)
     // header CRC
     hdr_crc = crc32(0, hdrbuf, FW_HDR_LEN);
     *((uint32_t*)(hdrbuf+HDR_SIZE-4)) = htonl(hdr_crc);
-    
-    printf("%u, %u\n", tot_bytes_read, fileinfo.st_size);
     
     if (tot_bytes_read != fileinfo.st_size) {
         printf("Incorrect size output file\n");

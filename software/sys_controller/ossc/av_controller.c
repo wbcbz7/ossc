@@ -78,7 +78,7 @@ alt_u8 auto_input, auto_av1_ypbpr, auto_av2_ypbpr = 1, auto_av3_ypbpr;
 char row1[LCD_ROW_LEN+1], row2[LCD_ROW_LEN+1], menu_row1[LCD_ROW_LEN+1], menu_row2[LCD_ROW_LEN+1];
 
 extern alt_u8 menu_active;
-avinput_t target_input;
+avinput_t target_input = 0;
 
 alt_u8 pcm1862_active;
 
